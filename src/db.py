@@ -19,42 +19,67 @@ class DataModel():
         except sqlite3.Error as error:
             print("Σφάλμα σύνδεσης στη βάση δεδομένων sqlite", error)
     
+    
     def close(self):
         self.con.commit()
         self.con.close()
 
-    def executeSQL(self, query, show=False):
+
+    def executeSQL(self, query):
         try:
             t1 = time.perf_counter()
             for statement in query.split(";"):
                 if statement.strip():
+                    self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
                     self.cursor.execute(statement)
                     sql_time = time.perf_counter() - t1
                     print(f'εκτέλεση εντολής {statement[:40]}... σε {sql_time:.5f} sec')
-            if show:
-                for row in self.cursor.fetchall():
-                    print(", ".join([str(item)for item in row]))
             self.con.commit()
             return True
         except sqlite3.Error as error:
             print(f"Σφάλμα εκτέλεσης εντολής SQL", error)
             return False
     
+    
     def readTable(self, table):
         '''Φόρτωμα ενός πίνακα, όταν το προαιρετικό όρισμα machine πάρει τιμή, τότε επιστρέφει μόνο 
         τις εγγραφές που αφορούν τη συγκεκριμένη μηχανή'''
         try:
+            self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
             query = f'''SELECT * FROM {table};'''
             self.cursor.execute(query)
             records = self.cursor.fetchall()
-            return records
-            # result = []
-            # for row in records:
-            #     result.append(dict(row))
-            # return result
+            return self.toJSON(table, records)
         except sqlite3.Error as error:
             print(f"Σφάλμα φόρτωσης πίνακα {table}", error)
-
+            
+            
+    def readData(self, query):
+        try:
+            self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
+            self.cursor.execute(query)
+            records = self.cursor.fetchall()
+            return records
+        except sqlite3.Error as error:
+            print(f"Σφάλμα φόρτωσης πίνακα", error)
+    
+    
+    def toJSON(self, table, results):
+        try:
+            query = f'''PRAGMA table_info({table});'''
+            self.cursor.execute(query)
+            records = self.cursor.fetchall()
+            cols = []
+            for record in records:
+                cols.append(record[1])
+            pretty_res=[]
+            for result in results:
+                res = {cols[i]: list(result)[i] for i in range(len(cols))}
+                pretty_res.append(res)          
+            return pretty_res
+        except sqlite3.Error as error:
+            print(f"Σφάλμα φόρτωσης πίνακα {table}", error)
+        
 
 if __name__ == "__main__":
     dbfile = "db/ferry.db"
