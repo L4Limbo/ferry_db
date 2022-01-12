@@ -1,0 +1,8 @@
+,type,description,discount
+0,Adult,null,0.0
+1,Infant,(Ages: 0 - 5),1.0
+2,Child,(Ages: 5 - 16),0.25
+3,Student,null,0.5
+4,Senior,null,0.5
+5,Passenger with reduced mobility,null,0.25
+6,Greek military personel,null,1.0

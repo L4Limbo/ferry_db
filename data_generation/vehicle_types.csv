@@ -1,0 +1,4 @@
+,type,description,fee
+0,Car,(Vehicles up to 5m long and 2m high),1.5
+1,Motorcycle,(All motorcycles),0.5
+2,Truck,Vehicles up to 8m long and 3.5m high,2.0
