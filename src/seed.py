@@ -151,17 +151,18 @@ def TicketSeeder():
     
     ticket_typess = db.readTable('TICKET_TYPE')
     ticket_types = [ticket_type['type'] for ticket_type in ticket_typess]
-    
+    special_seats = ['Deck', 'Assigned Seat', '2 Bed Cabin (Single Bed)', '2 Bed Cabin (Whole Cabin)','4 Bed Cabin (Single Bed)','4 Bed Cabin (Whole Cabin)']
     for index, ticket in tickets.iterrows():
         passenger_id = random.choice(passenger_ids)
         trip_id = random.choice(trip_ids)
         payment_id = random.choice(payment_ids)
         v_type = random.choice(vehicle_types)
         t_type = random.choice(ticket_types)
+        special_seat = random.choice(special_seats)
         db.executeSQL(
             f'''
                 INSERT INTO 'TICKET' ('ticket_code','cost','special_seat','t_type','v_type','payment_id','passenger_id','trip_id')
-                VALUES ('{ticket.ticket_code}',100,'null','{t_type}','{v_type}','{payment_id}','{passenger_id}','{trip_id}')
+                VALUES ('{ticket.ticket_code}',100,'{special_seat}','{t_type}','{v_type}','{payment_id}','{passenger_id}','{trip_id}')
             ''')
     pass
 
