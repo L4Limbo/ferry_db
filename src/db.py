@@ -25,12 +25,15 @@ class DataModel():
         self.con.close()
 
 
-    def executeSQL(self, query):
+    def executeSQL(self, query, fkeys=True):
         try:
             t1 = time.perf_counter()
             for statement in query.split(";"):
                 if statement.strip():
-                    self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
+                    if(fkeys):
+                        self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
+                    else:
+                        self.cursor.execute('PRAGMA FOREIGN_KEYS = off')
                     self.cursor.execute(statement)
                     sql_time = time.perf_counter() - t1
                     print(f'εκτέλεση εντολής {statement[:40]}... σε {sql_time:.5f} sec')

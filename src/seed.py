@@ -11,100 +11,44 @@ dbfile = "db/ferry.db"
 db = db.DataModel(dbfile)
 
 
-def HarborSeeder():
-    ClearDB('HARBOR')
+def PortSeeder():
+    ClearDB('PORT')
     ports = pd.read_csv('data_generation/el_ports.csv')
     for index, port in ports.iterrows():
         col = 'name'
         db.executeSQL(
             f'''
-                INSERT INTO 'HARBOR' ('name') VALUES ('{port[col]}')
+                INSERT INTO 'PORT' ('name') VALUES ('{port[col]}')
             ''')
     pass
 
-
-def PassengerSeeder():
-    ClearDB('PASSENGER')
-    passengers = pd.read_csv('data_generation/fake_passengers.csv')
-    for index, passenger in passengers.iterrows():
+def VehicleTypeSeeder():
+    ClearDB('VEHICLE_TYPE')
+    vehicle_types = pd.read_csv('data_generation/vehicle_types.csv')
+    for index, vehicle_type in vehicle_types.iterrows():
         db.executeSQL(
             f'''
-                INSERT INTO 'PASSENGER' ('fname','lname','country_code',
-                'phone_number','email','nationality','birthdate')
-                VALUES ('{passenger.fname}','{passenger.lname}','{passenger.country_code}',
-                '{passenger.phone_number}','{passenger.email}','{passenger.nationality}','{passenger.birthdate}')
+                INSERT INTO 'VEHICLE_TYPE' ('type','description','fee') 
+                VALUES 
+                ('{vehicle_type.type}','{vehicle_type.description}','{vehicle_type.fee}')
             ''')
     pass
 
-
-def TicketSeeder():
-    ClearDB('TICKET')
-    tickets = pd.read_csv('data_generation/fake_tickets.csv')
-    passengers = db.readTable('PASSENGER')
-    passengers_id = [passenger['id'] for passenger in passengers]
-    routes = db.readTable('ROUTE')
-    routes_id = [route['id'] for route in routes]
-    for index, ticket in tickets.iterrows():
-        passenger_id = random.choice(passengers_id)
-        route_id = random.choice(routes_id)
+def TicketTypeSeeder():
+    ClearDB('TICKET_TYPE')
+    ticket_types = pd.read_csv('data_generation/ticket_types.csv')
+    for index, ticket_type in ticket_types.iterrows():
+        if (str(ticket_type.description).lower()) == "nan":
+            description = "null"
+        else:
+            description = ticket_type.description
         db.executeSQL(
             f'''
-                INSERT INTO 'TICKET' ('ticket_code','category','vehicle','passenger_id','route_id')
-                VALUES ('{ticket.ticket_code}','{ticket.category}','{ticket.vehicle}','{passenger_id}','{route_id}')
+                INSERT INTO 'TICKET_TYPE' ('type','description','discount') 
+                VALUES 
+                ('{ticket_type.type}','{description}','{ticket_type.discount}')
             ''')
     pass
-
-
-def CouponSeeder():
-    ClearDB('COUPON')
-    coupons = pd.read_csv('data_generation/fake_coupons.csv')
-    for index, coupon in coupons.iterrows():
-        db.executeSQL(
-            f'''
-                INSERT INTO 'COUPON' ('code','used')
-                VALUES ('{coupon.code}','{coupon.used}')
-            ''')
-    pass
-
-
-def SpecialSeatSeeder():
-    ClearDB('SPECIAL_SEAT')
-    pass
-
-
-def RouteSeeder(count=10):
-    ClearDB('ROUTE')
-    companies = db.readTable('COMPANY')
-    companies_id = [company['id'] for company in companies]
-    for i in range(0, count):
-        company_id = random.choice(companies_id)
-        description = fake.sentence()
-        db.executeSQL(
-            f'''
-                INSERT INTO 'ROUTE' ('description','company_id')
-                VALUES ('{description}','{company_id}')
-            ''')
-    pass
-
-
-def ShipSeeder():
-    ClearDB('SHIP')
-    ships = pd.read_csv('data_generation/fake_ships.csv')
-    services = db.readTable('SERVICE')
-    services_id = [service['id'] for service in services]
-    companies = db.readTable('COMPANY')
-    companies_id = [company['id'] for company in companies]
-    for index, ship in ships.iterrows():
-        service_id = random.choice(services_id)
-        company_id = random.choice(companies_id)
-        db.executeSQL(
-            f'''
-                INSERT INTO 'SHIP' ('name','type','availability','fullness','service_id','company_id')
-                VALUES ('{ship.name}','{ship.type}','{ship.availability}','{ship.fullness}',
-                '{service_id}','{company_id}')
-            ''')
-    pass
-
 
 def CompanySeeder():
     ClearDB('COMPANY')
@@ -117,41 +61,110 @@ def CompanySeeder():
             ''')
     pass
 
-
-def ServiceSeeder():
-    ClearDB('SERVICE')
-    services = pd.read_csv('data_generation/fake_services.csv')
-    for index, service in services.iterrows():
+def CouponSeeder():
+    ClearDB('COUPON')
+    coupons = pd.read_csv('data_generation/fake_coupons.csv')
+    for index, coupon in coupons.iterrows():
         db.executeSQL(
             f'''
-                INSERT INTO 'SERVICE' ('name')
-                VALUES ('{service.name}')
+                INSERT INTO 'COUPON' ('code','discount')
+                VALUES ('{coupon.code}','{coupon.discount}')
             ''')
-    pass 
+    pass
 
+def PaymentSeeder():
+    ClearDB('PAYMENT')
+    payments = pd.read_csv('data_generation/fake_payments.csv')
+    for index, payment in payments.iterrows():
+        db.executeSQL(
+            f'''
+                INSERT INTO 'PAYMENT' ('insurance','sms','payment_date','total_cost','payment_method','coupon_code')
+                VALUES (0,0,'{payment.payment_date}',80.70,'{payment.payment_method}',null)
+            ''')
+    pass
+    
+def PassengerSeeder():
+    ClearDB('PASSENGER')
+    passengers = pd.read_csv('data_generation/fake_passengers.csv')
+    for index, passenger in passengers.iterrows():
+        db.executeSQL(
+            f'''
+                INSERT INTO 'PASSENGER' ('fname','lname','country_code',
+                'phone_number','email','birthdate','id_card')
+                VALUES ('{passenger.fname}','{passenger.lname}','{passenger.country_code}',
+                '{passenger.phone_number}','{passenger.email}','{passenger.birthdate}','{passenger.id_card}')
+            ''')
+    pass
 
-def StationSeeder():
-    ClearDB('STATION')
-    routes = db.readTable('ROUTE')
-    routes_id = [route['id'] for route in routes]
-    harbors = db.readTable('HARBOR')
-    harbors_id = [harbor['id'] for harbor in harbors]
-    for i in range(0, len(routes_id)):
-        no_stations = random.randint(3, 6)
+def TripSeeder():
+    ClearDB('TRIP')
+    companies = db.readTable('COMPANY')
+    companies_id = [company['id'] for company in companies]
+    ships = pd.read_csv('data_generation/fake_ships.csv')
+    for index, ship in ships.iterrows():
+        company_id = random.choice(companies_id)
+        description = fake.sentence()
+        db.executeSQL(
+            f'''
+                INSERT INTO 'TRIP' ('ship_name','ship_type','company_id','car_cap','deck_cap',
+                'air_cap', 'dcab_cap', 'qcab_cap')
+                VALUES ('{ship.name}','{ship.type}','{company_id}',50,150,50,20,40)
+            ''')
+    pass
+
+def RouteSeeder():
+    ClearDB('ROUTE')
+    trips = db.readTable('TRIP')
+    trip_ids = [trip['id'] for trip in trips]
+    ports = db.readTable('PORT')
+    port_ids = [port['id'] for port in ports]
+    for i in range(0, len(trip_ids)):
+        no_routes = random.randint(3, 6)
         cost = -5
         arrival_date = fake.date_time_this_year()
-        for j in range(0, no_stations):
-            harbor_id = random.choice(harbors_id)
-            arrival_date = fake.date_time_between(start_date=arrival_date, end_date="+10h" )
+        for j in range(0, no_routes):
+            route_seq = j + 1
+            dep_port_id = random.choice(port_ids)
+            arr_port_id = random.choice(port_ids)
+            departure_date = fake.date_time_between(start_date=arrival_date, end_date="+10h" )
             cost += 5
             db.executeSQL(
                 f''' 
-                    INSERT INTO 'STATION' ('route_id', 'harbor_id','arrival_date','cost')
-                    VALUES ('{routes_id[i]}','{harbor_id}','{arrival_date}','{cost}')
-                ''')         
+                    INSERT INTO 'ROUTE' ('trip_id', 'dep_port_id','arr_port_id','arr_date','dep_date','cost','deck_cap','route_seq')
+                    VALUES ('{trip_ids[i]}','{dep_port_id}','{arr_port_id}','{arrival_date}','{departure_date}','{cost}',50,'{route_seq}')
+                ''')
+            arrival_date = departure_date   
     pass
 
+def TicketSeeder():
+    ClearDB('TICKET')
+    tickets = pd.read_csv('data_generation/fake_tickets.csv')
+    passengers = db.readTable('PASSENGER')
+    passenger_ids = [passenger['id'] for passenger in passengers]
+    trips = db.readTable('TRIP')
+    trip_ids = [trip['id'] for trip in trips]
+    payments = db.readTable('PAYMENT')
+    payment_ids = [payment['id'] for payment in payments]
     
+    vehicle_typess = db.readTable('VEHICLE_TYPE')
+    vehicle_types = [vehicle_type['type'] for vehicle_type in vehicle_typess]
+    
+    ticket_typess = db.readTable('TICKET_TYPE')
+    ticket_types = [ticket_type['type'] for ticket_type in ticket_typess]
+    
+    for index, ticket in tickets.iterrows():
+        passenger_id = random.choice(passenger_ids)
+        trip_id = random.choice(trip_ids)
+        payment_id = random.choice(payment_ids)
+        v_type = random.choice(vehicle_types)
+        t_type = random.choice(ticket_types)
+        db.executeSQL(
+            f'''
+                INSERT INTO 'TICKET' ('ticket_code','cost','special_seat','t_type','v_type','payment_id','passenger_id','trip_id')
+                VALUES ('{ticket.ticket_code}',100,'null','{t_type}','{v_type}','{payment_id}','{passenger_id}','{trip_id}')
+            ''')
+    pass
+
 def ClearDB(table="null"):
     if table != "null":
         db.executeSQL(
@@ -167,18 +180,18 @@ def ClearDB(table="null"):
             ''')
     pass
 
-  
 def Seed(fresh=True):
     if(fresh):
         ClearDB()
-    HarborSeeder()
+    PortSeeder()
+    VehicleTypeSeeder()
+    TicketTypeSeeder()
     CompanySeeder()
-    PassengerSeeder()
     CouponSeeder()
-    ServiceSeeder()
-    ShipSeeder()
+    PaymentSeeder()
+    PassengerSeeder()
+    TripSeeder()
     RouteSeeder()
-    StationSeeder()
     TicketSeeder()
     pass
 
