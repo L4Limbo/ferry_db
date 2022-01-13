@@ -120,14 +120,17 @@ def RouteSeeder():
     port_ids = [port['id'] for port in ports]
     for i in range(0, len(trip_ids)):
         no_routes = random.randint(3, 6)
-        cost = -5
+        cost = random.randint(5,10)
         arrival_date = fake.date_time_this_year()
         for j in range(0, no_routes):
             route_seq = j + 1
-            dep_port_id = random.choice(port_ids)
-            arr_port_id = random.choice(port_ids)
+            if (j == 0):
+                dep_port_id = random.choice(port_ids) 
+            else:
+                dep_port_id = arr_port_id
+            arr_port_id = random.choice(port_ids) 
             departure_date = fake.date_time_between(start_date=arrival_date, end_date="+10h" )
-            cost += 5
+            cost += random.randint(5,12);
             db.executeSQL(
                 f''' 
                     INSERT INTO 'ROUTE' ('trip_id', 'dep_port_id','arr_port_id','arr_date','dep_date','cost','deck_cap','route_seq')
