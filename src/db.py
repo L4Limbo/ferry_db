@@ -25,7 +25,7 @@ class DataModel():
         self.con.close()
 
 
-    def executeSQL(self, query, fkeys=True):
+    def executeSQL(self, query, params=(), fkeys=True):
         try:
             t1 = time.perf_counter()
             for statement in query.split(";"):
@@ -34,11 +34,11 @@ class DataModel():
                         self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
                     else:
                         self.cursor.execute('PRAGMA FOREIGN_KEYS = off')
-                    self.cursor.execute(statement)
+                    self.cursor.execute(statement,params)
                     sql_time = time.perf_counter() - t1
                     print(f'εκτέλεση εντολής {statement[:40]}... σε {sql_time:.5f} sec')
             self.con.commit()
-            return True
+            return self.cursor.lastrowid
         except sqlite3.Error as error:
             print(f"Σφάλμα εκτέλεσης εντολής SQL", error)
             return False

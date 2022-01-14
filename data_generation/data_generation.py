@@ -77,6 +77,38 @@ def ticket_type_generation():
     ]
     df = df.append(data, ignore_index=True)
     df.to_csv('data_generation/ticket_types.csv')
+    
+def special_seat_type_generation():
+    df = pd.DataFrame(columns=['type','description','fee'])
+    data = [
+       {
+            'type': 'Assigned Seat',
+            'description': 'null',
+            'fee': 0.2
+       },
+       {
+            'type': '2 Bed Cabin (Single Bed)',
+            'description': 'null',
+            'fee': 1.0
+       },
+       {
+            'type': '2 Bed Cabin (Whole Cabin)',
+            'description': 'null',
+            'fee': 2.0
+       },
+       {
+            'type': '4 Bed Cabin (Single Bed)',
+            'description': 'null',
+            'fee': 1.0
+       },
+       {
+            'type': '4 Bed Cabin (Whole Cabin)',
+            'description': 'null',
+            'fee': 4.0
+       }
+    ]
+    df = df.append(data, ignore_index=True)
+    df.to_csv('data_generation/special_types.csv')
 
 def fake_companies(count=3):
     df = pd.DataFrame(columns=['name','api_url','api_psw'])

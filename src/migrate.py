@@ -17,6 +17,12 @@ def migrate_tables():
                 fee FLOAT DEFAULT NULL,
                 description VARCHAR(255) DEFAULT NULL
             );
+            
+            CREATE TABLE SPECIAL_SEAT_TYPE (
+                type VARCHAR(64) PRIMARY KEY,
+                fee FLOAT DEFAULT NULL,
+                description VARCHAR(255) DEFAULT NULL
+            );
 
             CREATE TABLE TICKET_TYPE (
                 type VARCHAR(64) PRIMARY KEY,
@@ -62,7 +68,6 @@ def migrate_tables():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ship_name VARCHAR(64),
                 ship_type VARCHAR(64),
-                car_cap INTEGER,
                 deck_cap INTEGER,
                 air_cap INTEGER,
                 dcab_cap INTEGER,
@@ -76,6 +81,7 @@ def migrate_tables():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 cost FLOAT,
                 deck_cap INTEGER,
+                v_cap INTEGER,
                 dep_date TEXT,
                 arr_date TEXT,
                 route_seq INTEGER,
@@ -102,6 +108,7 @@ def migrate_tables():
                 
                 FOREIGN KEY (v_type) REFERENCES VEHICLE_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (t_type) REFERENCES TICKET_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (special_seat) REFERENCES SPECIAL_SEAT_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (payment_id) REFERENCES PAYMENT(id) ON DELETE SET NULL ON UPDATE CASCADE,
                 FOREIGN KEY (passenger_id) REFERENCES PASSENGER(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (trip_id) REFERENCES TRIP(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -127,7 +134,7 @@ def drop_tables():
             db.executeSQL(
             f'''
                 DROP TABLE IF EXISTS {table}
-            ''',False)
+            ''', (),fkeys=False)
     
 
 
