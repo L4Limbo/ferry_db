@@ -4,7 +4,7 @@ import random
 import db
 import migrate
 import faker 
-
+import functions as dbf
 
 fake = faker.Faker()
 dbfile = "db/ferry.db"
@@ -50,6 +50,22 @@ def TicketTypeSeeder():
             ''')
     pass
 
+def SpecialSeatTypeSeeder():
+    ClearDB('SPECIAL_SEAT_TYPE')
+    special_seat_types = pd.read_csv('data_generation/special_types.csv')
+    for index, special_seat_type in special_seat_types.iterrows():
+        if (str(special_seat_type.description).lower()) == "nan":
+            description = "null"
+        else:
+            description = special_seat_type.description
+        db.executeSQL(
+            f'''
+                INSERT INTO 'SPECIAL_SEAT_TYPE' ('type','description','fee') 
+                VALUES 
+                ('{special_seat_type.type}','{description}','{special_seat_type.fee}')
+            ''')
+    pass
+
 def CompanySeeder():
     ClearDB('COMPANY')
     companies = pd.read_csv('data_generation/fake_companies.csv')
@@ -83,19 +99,6 @@ def PaymentSeeder():
             ''')
     pass
     
-def PassengerSeeder():
-    ClearDB('PASSENGER')
-    passengers = pd.read_csv('data_generation/fake_passengers.csv')
-    for index, passenger in passengers.iterrows():
-        db.executeSQL(
-            f'''
-                INSERT INTO 'PASSENGER' ('fname','lname','country_code',
-                'phone_number','email','birthdate','id_card')
-                VALUES ('{passenger.fname}','{passenger.lname}','{passenger.country_code}',
-                '{passenger.phone_number}','{passenger.email}','{passenger.birthdate}','{passenger.id_card}')
-            ''')
-    pass
-
 def TripSeeder():
     ClearDB('TRIP')
     companies = db.readTable('COMPANY')
@@ -104,11 +107,12 @@ def TripSeeder():
     for index, ship in ships.iterrows():
         company_id = random.choice(companies_id)
         description = fake.sentence()
+        ship_name = ship['name']
         db.executeSQL(
             f'''
-                INSERT INTO 'TRIP' ('ship_name','ship_type','company_id','car_cap','deck_cap',
+                INSERT INTO 'TRIP' ('ship_name','ship_type','company_id','deck_cap',
                 'air_cap', 'dcab_cap', 'qcab_cap')
-                VALUES ('{ship.name}','{ship.type}','{company_id}',50,150,50,20,40)
+                VALUES ('{ship_name}','{ship.type}','{company_id}',150,50,20,40)
             ''')
     pass
 
@@ -133,8 +137,8 @@ def RouteSeeder():
             cost += random.randint(5,12);
             db.executeSQL(
                 f''' 
-                    INSERT INTO 'ROUTE' ('trip_id', 'dep_port_id','arr_port_id','arr_date','dep_date','cost','deck_cap','route_seq')
-                    VALUES ('{trip_ids[i]}','{dep_port_id}','{arr_port_id}','{arrival_date}','{departure_date}','{cost}',50,'{route_seq}')
+                    INSERT INTO 'ROUTE' ('trip_id', 'dep_port_id','arr_port_id','arr_date','dep_date','cost','deck_cap','v_cap','route_seq')
+                    VALUES ('{trip_ids[i]}','{dep_port_id}','{arr_port_id}','{arrival_date}','{departure_date}','{cost}',150,30,'{route_seq}')
                 ''')
             arrival_date = departure_date   
     pass
@@ -192,13 +196,43 @@ def Seed(fresh=True):
     TicketTypeSeeder()
     CompanySeeder()
     CouponSeeder()
-    PaymentSeeder()
-    PassengerSeeder()
+    # PaymentSeeder()
+    # PassengerSeeder()
     TripSeeder()
     RouteSeeder()
-    TicketSeeder()
+    PTPSeeder()
     pass
 
+
+def PTPSeeder():
+    ClearDB('PASSENGER')
+    ClearDB('PAYMENT')
+    ClearDB('TICKET')
+    passengers = pd.read_csv('data_generation/fake_passengers.csv')
+    trip_ids = db.readData(''' 
+            SELECT id
+            FROM TRIP                
+            ''')
+    trips = []
+    for c in trip_ids:
+        trips.append(c[0])
+    
+    tickets = []
+    for index, passenger in passengers.iterrows():
+        passenger_id = dbf.storePassenger(passenger.fname, passenger.lname, passenger.country_code,
+                           passenger.phone_number, passenger.email, passenger.birthdate, passenger.id_card)
+        trip_id = random.choice(trips)
+        ticket_cost = dbf.getTripCost(trip_id, random.randint(1, 2), random.randint(2,3))
+        tickets.append([passenger_id, ticket_cost, trip_id])
+        
+    print(tickets)
+    for i in range(0,len(tickets),2):
+        payment_cost = tickets[i][1] + tickets[i+1][1]
+        payment_id = dbf.storePayment(payment_cost, 0, 0, '2022-01-14', 'paypal', None)
+        # payment_id = int(db.cursor.lastrowid)
+        print(payment_id)
+        dbf.storeTicket(fake.ean(8), tickets[i][1], None, None, 'Adult', payment_id, int(tickets[i][0]), int(tickets[i][2]))
+        dbf.storeTicket(fake.ean(8), tickets[i+1][1], None, None, 'Adult', payment_id, int(tickets[i+1][0]), int(tickets[i+1][2]))
 
 def main():
     print('Eloquent:')
