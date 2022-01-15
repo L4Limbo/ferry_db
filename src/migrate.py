@@ -66,6 +66,7 @@ def migrate_tables():
 
             CREATE TABLE TRIP (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                uid VARCHAR(10) UNIQUE,
                 ship_name VARCHAR(64),
                 ship_type VARCHAR(64),
                 deck_cap INTEGER,
@@ -89,7 +90,6 @@ def migrate_tables():
                 arr_port_id INTEGER,
                 trip_id INTEGER,
                 
-                
                 FOREIGN KEY (trip_id) REFERENCES TRIP(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (dep_port_id) REFERENCES PORT(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (arr_port_id) REFERENCES PORT(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -105,11 +105,13 @@ def migrate_tables():
                 payment_id INTEGER,
                 passenger_id INTEGER,
                 trip_id INTEGER,
+                first_route INTEGER,
+                last_route INTEGER,
                 
                 FOREIGN KEY (v_type) REFERENCES VEHICLE_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (t_type) REFERENCES TICKET_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (special_seat) REFERENCES SPECIAL_SEAT_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
-                FOREIGN KEY (payment_id) REFERENCES PAYMENT(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                FOREIGN KEY (payment_id) REFERENCES PAYMENT(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (passenger_id) REFERENCES PASSENGER(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (trip_id) REFERENCES TRIP(id) ON DELETE CASCADE ON UPDATE CASCADE
             );
