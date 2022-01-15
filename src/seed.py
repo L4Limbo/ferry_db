@@ -5,6 +5,7 @@ import db
 import migrate
 import faker 
 import functions as dbf
+import datetime
 
 fake = faker.Faker()
 dbfile = "db/ferry.db"
@@ -108,11 +109,12 @@ def TripSeeder():
         company_id = random.choice(companies_id)
         description = fake.sentence()
         ship_name = ship['name']
+        uid = ship_name[:1].upper()+str(fake.ean(8));
         db.executeSQL(
             f'''
-                INSERT INTO 'TRIP' ('ship_name','ship_type','company_id','deck_cap',
+                INSERT INTO 'TRIP' ('uid','ship_name','ship_type','company_id','deck_cap',
                 'air_cap', 'dcab_cap', 'qcab_cap')
-                VALUES ('{ship_name}','{ship.type}','{company_id}',150,50,20,40)
+                VALUES ('{uid}','{ship_name}','{ship.type}','{company_id}',150,50,20,40)
             ''')
     pass
 
@@ -125,7 +127,7 @@ def RouteSeeder():
     for i in range(0, len(trip_ids)):
         no_routes = random.randint(3, 6)
         cost = random.randint(5,10)
-        arrival_date = fake.date_time_this_year()
+        departure_date = fake.date_time_this_year()
         for j in range(0, no_routes):
             route_seq = j + 1
             if (j == 0):
@@ -133,14 +135,14 @@ def RouteSeeder():
             else:
                 dep_port_id = arr_port_id
             arr_port_id = random.choice(port_ids) 
-            departure_date = fake.date_time_between(start_date=arrival_date, end_date="+10h" )
+            arrival_date = fake.date_time_between(start_date=departure_date, end_date=departure_date + datetime.timedelta(hours = random.randint(1,5)))
             cost += random.randint(5,12);
             db.executeSQL(
                 f''' 
                     INSERT INTO 'ROUTE' ('trip_id', 'dep_port_id','arr_port_id','arr_date','dep_date','cost','deck_cap','v_cap','route_seq')
                     VALUES ('{trip_ids[i]}','{dep_port_id}','{arr_port_id}','{arrival_date}','{departure_date}','{cost}',150,30,'{route_seq}')
                 ''')
-            arrival_date = departure_date   
+            departure_date = arrival_date   
     pass
 
 def TicketSeeder():
@@ -194,6 +196,7 @@ def Seed(fresh=True):
     PortSeeder()
     VehicleTypeSeeder()
     TicketTypeSeeder()
+    SpecialSeatTypeSeeder()
     CompanySeeder()
     CouponSeeder()
     # PaymentSeeder()
@@ -222,17 +225,17 @@ def PTPSeeder():
         passenger_id = dbf.storePassenger(passenger.fname, passenger.lname, passenger.country_code,
                            passenger.phone_number, passenger.email, passenger.birthdate, passenger.id_card)
         trip_id = random.choice(trips)
-        ticket_cost = dbf.getTripCost(trip_id, random.randint(1, 2), random.randint(2,3))
-        tickets.append([passenger_id, ticket_cost, trip_id])
+        first_route = random.randint(1, 2)
+        last_route = random.randint(first_route, 3)
+        ticket_cost = dbf.getTripCost(trip_id, first_route, last_route)
+        tickets.append([passenger_id, ticket_cost, trip_id, first_route, last_route])
         
-    print(tickets)
     for i in range(0,len(tickets),2):
         payment_cost = tickets[i][1] + tickets[i+1][1]
         payment_id = dbf.storePayment(payment_cost, 0, 0, '2022-01-14', 'paypal', None)
         # payment_id = int(db.cursor.lastrowid)
-        print(payment_id)
-        dbf.storeTicket(fake.ean(8), tickets[i][1], None, None, 'Adult', payment_id, int(tickets[i][0]), int(tickets[i][2]))
-        dbf.storeTicket(fake.ean(8), tickets[i+1][1], None, None, 'Adult', payment_id, int(tickets[i+1][0]), int(tickets[i+1][2]))
+        dbf.storeTicket(fake.ean(8), tickets[i][1], None, None, 'Adult', payment_id, int(tickets[i][0]), int(tickets[i][2]), int(tickets[i][3]), int(tickets[i][4]))
+        dbf.storeTicket(fake.ean(8), tickets[i+1][1], None, None, 'Adult', payment_id, int(tickets[i+1][0]), int(tickets[i+1][2]), int(tickets[i+1][3]),int(tickets[i+1][4]))
 
 def main():
     print('Eloquent:')

@@ -1,11 +1,15 @@
 import db
+import faker
+
+fake = faker.Faker()
 
 dbfile = "db/ferry.db"
 db = db.DataModel(dbfile)
 
 # READ FUNCTIONS FOR USER
 
-def findPorts(dep_port, arr_port, date):
+def findPorts(dep_port, arr_port, date, admin_msg=False, msg=""):
+    
     return db.readData(f''' 
         SELECT dep_r.trip_id, dep_r.route_seq as first_route , arr_r.route_seq as last_route
         from ROUTE as dep_r left join ROUTE as arr_r on dep_r.trip_id=arr_r.trip_id
@@ -50,12 +54,18 @@ def getTripCost(trip_id, first_route, last_route):
         WHERE ROUTE.trip_id={trip_id} AND ROUTE.route_seq>={first_route} AND ROUTE.route_seq<={last_route}
     ''')[0][0]
     
-
+def getTotalCap(trip_id, first_route, last_route):
+    return db.readData(f''' 
+        SELECT min(ROUTE.deck_cap) AS mincap
+        FROM ROUTE
+        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}
+    ''')
+    
 def getSpecialSeats(trip_id):
     return db.readData(f''' 
         SELECT count(*) AS number, TICKET.special_seat AS seat_type
         FROM TICKET
-        WHERE TICKET.trip_id = {trip_id}
+        WHERE TICKET.trip_id = {trip_id} AND seat_type IS NOT NULL
         GROUP BY seat_type
         UNION
         SELECT 0 AS number, SPECIAL_SEAT_TYPE.type AS seat_type
@@ -64,8 +74,9 @@ def getSpecialSeats(trip_id):
             NOT IN (
             SELECT T.special_seat as seat_type
             FROM TICKET AS T
-            WHERE T.trip_id={trip_id})
-        GROUP BY seat_type     
+            WHERE T.trip_id={trip_id} AND seat_type IS NOT NULL)
+        GROUP BY seat_type
+        ORDER BY seat_type    
     ''')
     
     
@@ -75,7 +86,13 @@ def getTripCapacity(trip_id):
         FROM TRIP
         WHERE TRIP.id={trip_id}
     ''')
-    
+
+def getTotalVehicleCap(trip_id, first_route, last_route):
+    return db.readData(f''' 
+        SELECT min(ROUTE.v_cap) AS minvcap
+        FROM ROUTE
+        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}
+    ''')
     
 def getTicketTotalCost(trip_id, first_route, last_route, ticket_type, seat_type, v_type):
     return db.readData(f''' 
@@ -116,13 +133,32 @@ def storePayment(total_cost,insurance, sms, payment_date, payment_method, coupon
     params = (total_cost,insurance, sms, payment_date, payment_method, coupon_code)
     return db.executeSQL("INSERT INTO PAYMENT (total_cost, insurance, sms, payment_date, payment_method, coupon_code) VALUES (?,?,?,?,?,?)",params)
 
-def storeTicket(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id):
-    params =(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id)
-    return db.executeSQL("INSERT INTO TICKET (ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id) VALUES (?,?,?,?,?,?,?,?)",params=params)
+def storeTicket(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id,first_route, last_route):
+    params =(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id,first_route, last_route)
+    return db.executeSQL("INSERT INTO TICKET (ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id, first_route, last_route) VALUES (?,?,?,?,?,?,?,?,?,?)",params=params)
 
+def getCouponDiscount(coupon):
+    return db.readData(f"SELECT discount FROM COUPON WHERE COUPON.code='{coupon}'")
+
+def getPassengerID(id_card):
+    return db.readData(f"SELECT id FROM PASSENGER WHERE PASSENGER.id_card='{id_card}' AND PASSENGER.id_card IS NOT NULL")
 
 # UPDATE FUNCTIONS FOR USER
 def updateSeatCapacity(trip_id,first_route,last_route, deck_cap, v_cap):
     params = (deck_cap,v_cap,trip_id, first_route, last_route)
     return db.executeSQL("UPDATE ROUTE SET deck_cap=deck_cap-?, v_cap=v_cap-? WHERE trip_id=? AND route_seq>=? AND route_seq<=?",params)
 
+def getCompanyTickets(api_url, api_psw, start_date, last_date, trip_id):
+    pass
+
+
+
+# Generated Ticket Code
+def generateTicketCode(trip_uid,first_route,last_route,ship_name,date):
+    code = ""
+    code += ship_name.upper()[:2] + date[:4] + trip_uid[:4] + str(first_route) + str(last_route) + fake.ean(8)[:3]
+    return code
+
+
+def getTripUID(trip_id):
+    return db.readData(f"SELECT uid, ship_name FROM TRIP WHERE TRIP.id='{trip_id}'")
