@@ -46,6 +46,7 @@ In the following files check if the  ```dbfile=``` variable points right at the 
 # Contributors 
 * Mitakidis Anestis, Undergrad Student of ECE at the University of Patras. 
 : https://github.com/L4Limbo 
-* Alejandro Matinopoulos Lopez, Undergrad Student of ECE at the University of Patras. 
+* Alejandro Matinopoulos Lopez, Undergrad Student of ECE at the University of Patras.
+: https://github.com/alematlop
 # Useful links 
 * Github Repo: https://github.com/L4Limbo/ferry_db
