@@ -30,8 +30,10 @@
 
 * Once you have all dependencies installed open  ```/src/seed.py ``` and in an interactive Python Shell run the ``` migrate.migrate()``` method to create the database tables. When tables are created in the same Shell run ```Seed()``` to insert fake data in the database.
 
-Now you are ready to open  ```/src/app.py ``` in an interactive Python Shell and run the app. 
-TIP: Type  ```book ``` to Start!
+Now you are ready to open  ```/src/app.py``` in an interactive Python Shell. 
+TIP: Type  ```book``` to Start!
+
+If you want to run the admin section open  ```/src/admin.py``` in an interactive Python Shell. 
 
 # Note
 In the following files check if the  ```dbfile=``` variable points right at the path that your database want to be created.
