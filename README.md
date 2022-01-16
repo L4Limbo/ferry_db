@@ -12,6 +12,7 @@
   pip install pandas
   ```
 * Linux
+
   Install Python:
   ```
   sudo apt install python3.8
