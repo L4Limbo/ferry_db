@@ -1,4 +1,6 @@
 # Ferry DB App... developed for University Databases Course 
+This repository is part of a project that we for the University Databases Course. The database is supposed to represent the database for a ferry-ticket booking app.
+
 # Project Setup
 * Clone Repo 
 * In Terminal: Run the follow commands in terminal to install the modules that are used 
