@@ -5,19 +5,26 @@
 ** Windows
   Download Python 3.8.10 from https://www.python.org/downloads/ and run installation.
   Once Python is installed run the follow commands in a new Terminal.
+  ```
   pip install sqlite3
   pip install faker
   pip install pandas
+  ```
 ** Linux
   Install Python:
+  ```
   sudo apt install python3.8
+  ```
   Confirm the installation: 
+  ```
   python3.8 --version
+  ```
   Once Python is installed run the follow commands in a new Terminal.
+  ```
   pip3 install sqlite3
   pip3 install faker
   pip3 install pandas
- 
+ ```
 * Once you have all dependencies installed open /src/seed.py and in an interactive Python Shell run the migrate.migrate() method to create the database tables. When tables are created in the same Shell run Seed() to insert fake data in the database.
 
 # Files 
