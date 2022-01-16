@@ -28,9 +28,13 @@
   pip3 install pandas
   ```
 
-* Once you have all dependencies installed open  ```<mark> /src/seed.py </mark> ``` and in an interactive Python Shell run the ``` migrate.migrate()``` method to create the database tables. When tables are created in the same Shell run ```Seed()``` to insert fake data in the database.
+* Once you have all dependencies installed open  ```/src/seed.py ``` and in an interactive Python Shell run the ``` migrate.migrate()``` method to create the database tables. When tables are created in the same Shell run ```Seed()``` to insert fake data in the database.
 
-# Files 
+Now you are ready to open  ```/src/app.py ``` in an interactive Python Shell and run the app. 
+TIP: Type  ```book ``` to Start!
+
+# Note
+In the following files check if the  ```dbfile ``` variable points right at the path that your database want to be created.
 
 # Contributors 
 * Mitakidis Anestis, Undergrad Student of ECE at the University of Patras. 
