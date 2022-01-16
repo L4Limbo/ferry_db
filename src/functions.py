@@ -360,8 +360,10 @@ def getPassengerLinkedToTicket(ticket_code):
     PASSENGER.fname, PASSENGER.lname, PASSENGER.id_card, PASSENGER.email, PASSENGER.phone_number,
     DEP.name, ARR.name
     FROM TICKET JOIN PASSENGER ON TICKET.passenger_id=PASSENGER.id
-    JOIN PORT AS DEP ON TICKET.first_route=DEP.id
-    JOIN PORT AS ARR ON TICKET.last_route=ARR.id
+    JOIN ROUTE ON TICKET.first_route = ROUTE.id
+    JOIN PORT AS DEP ON ROUTE.dep_port_id = DEP.id
+    JOIN ROUTE AS R ON TICKET.last_route = R.id
+    JOIN PORT AS ARR ON R.arr_port_id = ARR.id
     WHERE TICKET.ticket_code='{ticket_code}' ''')
 
     return temp

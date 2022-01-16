@@ -71,10 +71,11 @@ def CompanySeeder():
     ClearDB('COMPANY')
     companies = pd.read_csv('data_generation/fake_companies.csv')
     for index, company in companies.iterrows():
+        name = company['name']
         db.executeSQL(
             f'''
                 INSERT INTO 'COMPANY' ('name','api_url','api_psw')
-                VALUES ('{company.name}','{company.api_url}','{company.api_psw}')
+                VALUES ('{name}','{company.api_url}','{company.api_psw}')
             ''')
     pass
 
