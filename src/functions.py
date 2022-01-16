@@ -3,13 +3,13 @@ import faker
 
 fake = faker.Faker()
 
-dbfile = "db/ferry.db"
+
+dbfile = "ferry.db"
 db = db.DataModel(dbfile)
 
 # READ FUNCTIONS FOR USER
 
-def findPorts(dep_port, arr_port, date, admin_msg=False, msg=""):
-    
+def findPorts(dep_port, arr_port, date):
     return db.readData(f''' 
         SELECT dep_r.trip_id, dep_r.route_seq as first_route , arr_r.route_seq as last_route
         from ROUTE as dep_r left join ROUTE as arr_r on dep_r.trip_id=arr_r.trip_id
@@ -25,6 +25,52 @@ def findPorts(dep_port, arr_port, date, admin_msg=False, msg=""):
         )
         and dep_r.route_seq<=arr_r.route_seq
         and date(dep_r.dep_date)='{date}';
+    ''')
+
+
+def getRouteSeq(first_route, last_route):
+    return db.readData(f''' 
+        SELECT route_seq
+        FROM ROUTE
+        WHERE id={first_route} OR id={last_route}
+        ORDER BY route_seq ASC
+        ''')
+
+##def retrieveSequence(first_route, last_route):
+##
+##    temp = getRouteSeq(first_route, last_route)
+##
+##    if len(temp)>1: return [x[0][0],x[1][0]]
+##
+##    else: return [x[0][0],x[0][0]]
+
+
+def getRouteID(trip_id, first_route, last_route):
+
+    temp = db.readData(f''' 
+        SELECT route_seq, id
+        FROM ROUTE
+        WHERE trip_id={trip_id} AND (route_seq={first_route} OR route_seq={last_route})
+        ORDER BY route_seq ASC
+        ''')
+
+    if len(temp)>1: return [temp[0][1],temp[1][1]]
+
+    else: return [temp[0][1],temp[0][1]]
+
+
+def getTotalCap(trip_id, first_route, last_route):
+    return db.readData(f''' 
+        SELECT min(ROUTE.deck_cap) AS mincap
+        FROM ROUTE
+        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}          
+    ''')
+
+def getTotalVehicleCap(trip_id, first_route, last_route):
+    return db.readData(f''' 
+        SELECT min(ROUTE.v_cap) AS minvcap
+        FROM ROUTE
+        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}          
     ''')
     
     
@@ -42,6 +88,13 @@ def getTripStations(trip_id, first_route, last_route):
         ) AS X
         JOIN PORT ON X.dep_port_id=PORT.id          
     ''')
+
+def getTripInfo(trip_id):
+    return db.readData(f''' 
+        SELECT DISTINCT uid, ship_name, ship_type, api_url
+        FROM TRIP JOIN COMPANY ON TRIP.company_id=COMPANY.id
+        WHERE TRIP.id = {trip_id}         
+    ''')
     
 
 def getTripCost(trip_id, first_route, last_route):
@@ -54,13 +107,7 @@ def getTripCost(trip_id, first_route, last_route):
         WHERE ROUTE.trip_id={trip_id} AND ROUTE.route_seq>={first_route} AND ROUTE.route_seq<={last_route}
     ''')[0][0]
     
-def getTotalCap(trip_id, first_route, last_route):
-    return db.readData(f''' 
-        SELECT min(ROUTE.deck_cap) AS mincap
-        FROM ROUTE
-        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}
-    ''')
-    
+
 def getSpecialSeats(trip_id):
     return db.readData(f''' 
         SELECT count(*) AS number, TICKET.special_seat AS seat_type
@@ -76,7 +123,7 @@ def getSpecialSeats(trip_id):
             FROM TICKET AS T
             WHERE T.trip_id={trip_id} AND seat_type IS NOT NULL)
         GROUP BY seat_type
-        ORDER BY seat_type    
+        ORDER BY seat_type
     ''')
     
     
@@ -86,13 +133,7 @@ def getTripCapacity(trip_id):
         FROM TRIP
         WHERE TRIP.id={trip_id}
     ''')
-
-def getTotalVehicleCap(trip_id, first_route, last_route):
-    return db.readData(f''' 
-        SELECT min(ROUTE.v_cap) AS minvcap
-        FROM ROUTE
-        WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq >= {first_route} AND ROUTE.route_seq <= {last_route}
-    ''')
+    
     
 def getTicketTotalCost(trip_id, first_route, last_route, ticket_type, seat_type, v_type):
     return db.readData(f''' 
@@ -121,6 +162,15 @@ def getTicketTotalCost(trip_id, first_route, last_route, ticket_type, seat_type,
         FROM ROUTE
         WHERE ROUTE.trip_id = {trip_id} AND ROUTE.route_seq>={first_route} AND ROUTE.route_seq<={last_route}
     ''')
+
+def getCouponDiscount(coupon):
+
+    return db.readData(f"SELECT discount FROM COUPON WHERE COUPON.code='{coupon}'")
+
+
+def getPassengerID(id_card):
+
+    return db.readData(f"SELECT id FROM PASSENGER WHERE PASSENGER.id_card='{id_card}' AND PASSENGER.id_card IS NOT NULL")
     
 
 # CREATE FUNCTIONS FOR USER
@@ -133,23 +183,26 @@ def storePayment(total_cost,insurance, sms, payment_date, payment_method, coupon
     params = (total_cost,insurance, sms, payment_date, payment_method, coupon_code)
     return db.executeSQL("INSERT INTO PAYMENT (total_cost, insurance, sms, payment_date, payment_method, coupon_code) VALUES (?,?,?,?,?,?)",params)
 
-def storeTicket(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id,first_route, last_route):
-    params =(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id,first_route, last_route)
+def storeTicket(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id, first_route, last_route):
+    params =(ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id, first_route, last_route)
     return db.executeSQL("INSERT INTO TICKET (ticket_code, cost, special_seat, v_type, t_type, payment_id, passenger_id, trip_id, first_route, last_route) VALUES (?,?,?,?,?,?,?,?,?,?)",params=params)
 
-def getCouponDiscount(coupon):
-    return db.readData(f"SELECT discount FROM COUPON WHERE COUPON.code='{coupon}'")
-
-def getPassengerID(id_card):
-    return db.readData(f"SELECT id FROM PASSENGER WHERE PASSENGER.id_card='{id_card}' AND PASSENGER.id_card IS NOT NULL")
 
 # UPDATE FUNCTIONS FOR USER
 def updateSeatCapacity(trip_id,first_route,last_route, deck_cap, v_cap):
     params = (deck_cap,v_cap,trip_id, first_route, last_route)
     return db.executeSQL("UPDATE ROUTE SET deck_cap=deck_cap-?, v_cap=v_cap-? WHERE trip_id=? AND route_seq>=? AND route_seq<=?",params)
 
-def getCompanyTickets(api_url, api_psw, start_date, last_date, trip_id):
-    pass
+
+def addExtraCapacity(trip_id, deck_extra, veh_extra, air_extra, dcab_extra, qcab_extra):
+    
+    db.executeSQL("UPDATE ROUTE SET deck_cap=deck_cap+?, v_cap=v_cap+? WHERE trip_id=?",(deck_extra, veh_extra, trip_id))
+
+    return db.executeSQL("UPDATE TRIP SET deck_cap=deck_cap+?, air_cap=air_cap+?, dcab_cap=dcab_cap+?, qcab_cap=qcab_cap+? WHERE trip_id=?",(deck_extra, air_extra, dcab_extra, qcab_extra, trip_id))
+    
+    
+
+
 
 
 
@@ -161,4 +214,168 @@ def generateTicketCode(trip_uid,first_route,last_route,ship_name,date):
 
 
 def getTripUID(trip_id):
-    return db.readData(f"SELECT uid, ship_name FROM TRIP WHERE TRIP.id='{trip_id}'")
+
+        return db.readData(f"SELECT uid, ship_name FROM TRIP WHERE TRIP.id='{trip_id}'")
+
+
+## ADMIN SECTION
+
+
+def updatePassenger(fname,lname,country_code,phone_number,email,bdate,id_card):
+
+    params = (fname,lname,country_code,phone_number,email,bdate,id_card)
+    return db.executeSQL("UPDATE PASSENGER SET fname=?, lname=?, country_code=?, phone_number=?, email=?, birthdate=? WHERE id_card=?;", params)
+
+
+
+def readTicketsOfCompany(api_url):
+
+    return db.readData(f'''SELECT TICKET.id, TICKET.ticket_code, TICKET.cost, TICKET.special_seat, TICKET.v_type, TICKET.t_type, TICKET.payment_id, TICKET.passenger_id, TICKET.trip_id
+    FROM COMPANY JOIN TRIP ON COMPANY.id=TRIP.company_id
+    JOIN TICKET ON TRIP.id=TICKET.trip_id
+    WHERE COMPANY.api_url='{api_url}' ''')
+
+
+def readTicketsOfTrip(trip_uid):
+
+    return db.readData(f'''SELECT TICKET.id, TICKET.ticket_code, TICKET.cost, TICKET.special_seat, TICKET.v_type, TICKET.t_type, TICKET.payment_id, TICKET.passenger_id, TICKET.trip_id
+    FROM TRIP JOIN TICKET ON TRIP.id=TICKET.trip_id
+    WHERE TRIP.uid = '{trip_uid}' ''')
+
+
+
+def getTopTenDestinations():
+
+    return db.readData(f'''SELECT COUNT(*) AS NumOfTickets, PORT.name
+    FROM TICKET JOIN ROUTE ON ROUTE.trip_id=TICKET.trip_id JOIN PORT ON ROUTE.arr_port_id=PORT.id
+    WHERE TICKET.last_route=ROUTE.id
+    GROUP BY PORT.name
+    ORDER BY COUNT(*) DESC
+    LIMIT 10 ''')
+
+def getTopTenDepartures():
+
+    return db.readData(f'''SELECT COUNT(*) AS NumOfTickets, PORT.name
+    FROM TICKET JOIN ROUTE ON ROUTE.trip_id=TICKET.trip_id JOIN PORT ON ROUTE.arr_port_id=PORT.id
+    WHERE TICKET.first_route=ROUTE.id
+    GROUP BY PORT.name
+    ORDER BY COUNT(*) DESC
+    LIMIT 10 ''')
+
+
+def cancelledPaymentSeats(payment_id, trip_id):
+
+    return db.readData(f'''SELECT 'first_route',TICKET.first_route as num
+    FROM TICKET
+    WHERE TICKET.payment_id={payment_id} AND TICKET.trip_id={trip_id}
+    UNION
+    SELECT 'last_route',TICKET.last_route
+    FROM TICKET
+    WHERE TICKET.payment_id={payment_id} AND TICKET.trip_id={trip_id}
+    UNION
+    SELECT 'deckadd',count(*)
+    FROM TICKET
+    WHERE TICKET.payment_id={payment_id} AND TICKET.trip_id={trip_id}
+    UNION
+    SELECT 'vehadd',SUM(num)
+    FROM (
+            SELECT count(*) * 2 as num
+            FROM TICKET
+            WHERE TICKET.payment_id={payment_id} AND TICKET.v_type = 'Car' AND TICKET.trip_id={trip_id}
+            UNION
+            SELECT count(*) * 1 as num
+            FROM TICKET
+            WHERE TICKET.payment_id={payment_id} AND TICKET.v_type = 'Motorcycle' AND TICKET.trip_id={trip_id}
+            UNION
+            SELECT count(*) * 4 as num
+            FROM TICKET
+            WHERE TICKET.payment_id={payment_id} AND TICKET.v_type = 'Truck' AND TICKET.trip_id={trip_id}
+    )
+    ORDER BY 'first_route' ''')
+
+
+def cancelledPaymentTrips(payment_id):
+
+    return db.readData(f'''SELECT DISTINCT TICKET.trip_id
+    FROM TICKET
+    WHERE TICKET.payment_id={payment_id} ''')
+
+
+def deletePayment(payment_id):
+
+    return db.executeSQL(f"DELETE FROM PAYMENT WHERE id={payment_id};")
+
+
+def restoreRouteCap(trip_id, first_route, last_route, deck_extra, veh_extra):
+    
+    return db.executeSQL("UPDATE ROUTE SET deck_cap=deck_cap+?, v_cap=v_cap+? WHERE trip_id=? AND route_seq>=? and route_seq<=?",(deck_extra, veh_extra, trip_id, first_route, last_route))
+
+
+
+def storeTrip(uid, ship_name, ship_type, deck_cap, air_cap,
+            dcab_cap, qcab_cap, company_id, routes):
+
+    params = (uid, ship_name, ship_type, deck_cap, air_cap, dcab_cap, qcab_cap, company_id)
+    trip_id = db.executeSQL("INSERT INTO TRIP (uid, ship_name, ship_type, deck_cap, air_cap, dcab_cap, qcab_cap, company_id) VALUES (?,?,?,?,?,?,?,?)",params)
+
+    for el in routes:
+
+        params = el + (trip_id,)
+
+        db.executeSQL("INSERT INTO ROUTE (cost, deck_cap, v_cap, dep_date, arr_date, route_seq, dep_port_id, arr_port_id, trip_id) VALUES (?,?,?,?,?,?,?,?,?)",params)
+        
+
+def deleteTrip(uid):
+
+    deletedTickets = db.readData(f'''SELECT TICKET.ticket_code, PASSENGER.fname, PASSENGER.lname, PASSENGER.phone_number, PASSENGER.email,
+    PAYMENT.payment_date, PAYMENT.total_cost, PAYMENT.payment_method, PAYMENT.coupon_code, COMPANY.api_url
+    FROM TRIP JOIN TICKET ON TRIP.id=TICKET.trip_id
+    JOIN PASSENGER ON TICKET.passenger_id=PASSENGER.id
+    JOIN PAYMENT ON TICKET.payment_id = PAYMENT.id
+    JOIN COMPANY ON TRIP.company_id=COMPANY.id
+    WHERE TRIP.uid='{uid}' ''')
+    
+    db.executeSQL(f"DELETE FROM TRIP WHERE uid='{uid}';")
+
+    deletedPayments = db.readData(f'''SELECT PAYMENT.id
+    FROM TRIP JOIN TICKET ON TRIP.id=TICKET.trip_id
+    JOIN PAYMENT ON TICKET.payment_id=PAYMENT.id
+    WHERE TRIP.uid='{uid}' ''')
+
+
+    for el in deletedPayments:
+
+        pay_id = int(el[0])
+        
+        db.executeSQL(f"DELETE FROM PAYMENT WHERE id={pay_id};")
+
+    return deletedTickets
+    
+
+    
+
+def getPassengerLinkedToTicket(ticket_code):
+
+    temp = db.readData(f'''SELECT TICKET.ticket_code, TICKET.cost,
+    PASSENGER.fname, PASSENGER.lname, PASSENGER.id_card, PASSENGER.email, PASSENGER.phone_number,
+    DEP.name, ARR.name
+    FROM TICKET JOIN PASSENGER ON TICKET.passenger_id=PASSENGER.id
+    JOIN PORT AS DEP ON TICKET.first_route=DEP.id
+    JOIN PORT AS ARR ON TICKET.last_route=ARR.id
+    WHERE TICKET.ticket_code='{ticket_code}' ''')
+
+    return temp
+    
+
+
+
+
+    
+
+    
+
+
+
+
+
+

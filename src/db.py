@@ -11,13 +11,15 @@ class DataModel():
             self.con = sqlite3.connect(filename)
             self.row_factory = sqlite3.Row
             self.cursor = self.con.cursor()
-            print("Επιτυχής σύνδεση στη βάση δεδομένων", filename)
+##            print("Succesful connection to Database", filename)
             self.cursor.execute("select sqlite_version();")
             record = self.cursor.fetchall()
             for rec in record:
-                print("SQLite Database Version is: ", rec[0])
+                pass
+##                print("SQLite Database Version is: ", rec[0])
         except sqlite3.Error as error:
-            print("Σφάλμα σύνδεσης στη βάση δεδομένων sqlite", error)
+            pass
+##            print("Error when trying to connect to sqlite database", error)
     
     
     def close(self):
@@ -36,17 +38,15 @@ class DataModel():
                         self.cursor.execute('PRAGMA FOREIGN_KEYS = off')
                     self.cursor.execute(statement,params)
                     sql_time = time.perf_counter() - t1
-                    print(f'εκτέλεση εντολής {statement[:40]}... σε {sql_time:.5f} sec')
+##                    print(f'execute command {statement[:30]}... in {sql_time:.4f} sec')
             self.con.commit()
             return self.cursor.lastrowid
         except sqlite3.Error as error:
-            print(f"Σφάλμα εκτέλεσης εντολής SQL", error)
+##            print(f"Error executing SQL command", error)
             return False
     
     
     def readTable(self, table):
-        '''Φόρτωμα ενός πίνακα, όταν το προαιρετικό όρισμα machine πάρει τιμή, τότε επιστρέφει μόνο 
-        τις εγγραφές που αφορούν τη συγκεκριμένη μηχανή'''
         try:
             self.cursor.execute('PRAGMA FOREIGN_KEYS = on')
             query = f'''SELECT * FROM {table};'''
@@ -54,7 +54,8 @@ class DataModel():
             records = self.cursor.fetchall()
             return self.toJSON(table, records)
         except sqlite3.Error as error:
-            print(f"Σφάλμα φόρτωσης πίνακα {table}", error)
+            pass
+##            print(f"Error loading table {table}", error)
             
             
     def readData(self, query):
@@ -64,7 +65,8 @@ class DataModel():
             records = self.cursor.fetchall()
             return records
         except sqlite3.Error as error:
-            print(f"Σφάλμα φόρτωσης πίνακα", error)
+            pass
+##            print(f"Error loading table", error)
     
     
     def toJSON(self, table, results):
@@ -81,9 +83,10 @@ class DataModel():
                 pretty_res.append(res)          
             return pretty_res
         except sqlite3.Error as error:
-            print(f"Σφάλμα φόρτωσης πίνακα {table}", error)
+            pass
+##            print(f"Error loading table {table}", error)
         
 
 if __name__ == "__main__":
-    dbfile = "db/ferry.db"
-    ferry_db = DataModel(dbfile) # δημιουργία σύνδεσης στη βάση δεδομένων
+    dbfile = "ferry.db"
+    ferry_db = DataModel(dbfile)
