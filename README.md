@@ -2,7 +2,7 @@
 # Project Setup
 * Clone Repo 
 * In Terminal: Run the follow commands in terminal to install the modules that are used 
-** Windows
+* Windows
   Download Python 3.8.10 from https://www.python.org/downloads/ and run installation.
   Once Python is installed run the follow commands in a new Terminal.
   ```
@@ -10,7 +10,7 @@
   pip install faker
   pip install pandas
   ```
-** Linux
+* Linux
   Install Python:
   ```
   sudo apt install python3.8
