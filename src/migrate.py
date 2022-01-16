@@ -1,5 +1,5 @@
 import db
-dbfile = "db/ferry.db"
+dbfile = "ferry.db"
 db = db.DataModel(dbfile)
 
 
@@ -113,7 +113,8 @@ def migrate_tables():
                 FOREIGN KEY (special_seat) REFERENCES SPECIAL_SEAT_TYPE(type) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (payment_id) REFERENCES PAYMENT(id) ON DELETE CASCADE ON UPDATE CASCADE,
                 FOREIGN KEY (passenger_id) REFERENCES PASSENGER(id) ON DELETE CASCADE ON UPDATE CASCADE,
-                FOREIGN KEY (trip_id) REFERENCES TRIP(id) ON DELETE CASCADE ON UPDATE CASCADE
+                FOREIGN KEY (trip_id) REFERENCES TRIP(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                FOREIGN KEY (first_route) REFERENCES ROUTE(id) ON DELETE CASCADE ON UPDATE CASCADE
             );
         ''')
 
@@ -141,12 +142,18 @@ def drop_tables():
 
 
 def migrate():
+
+    print('Dropping Tables...')
     drop_tables()
+    print('Tables dropped succesfully.')
+
+    print('Creating Tables...')
     migrate_tables()
+    print('Tables created.')
 
 
 def main():
-    print('Eloquent:')
+    print('Migrations:')
 
 
 if __name__ == '__main__':
