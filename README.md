@@ -34,7 +34,12 @@ Now you are ready to open  ```/src/app.py ``` in an interactive Python Shell and
 TIP: Type  ```book ``` to Start!
 
 # Note
-In the following files check if the  ```dbfile ``` variable points right at the path that your database want to be created.
+In the following files check if the  ```dbfile=``` variable points right at the path that your database want to be created.
+```/src/db.py```
+```/src/seed.py```
+```/src/migrate.py```
+```/src/app.py```
+```/src/admin.py```
 
 # Contributors 
 * Mitakidis Anestis, Undergrad Student of ECE at the University of Patras. 
