@@ -26,7 +26,8 @@
   pip3 install sqlite3
   pip3 install faker
   pip3 install pandas
- ```
+  ```
+
 * Once you have all dependencies installed open /src/seed.py and in an interactive Python Shell run the migrate.migrate() method to create the database tables. When tables are created in the same Shell run Seed() to insert fake data in the database.
 
 # Files 
